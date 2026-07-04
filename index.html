@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JEC Processador</title>
+<style>
+  :root {
+    --bg: #F3F5F1;
+    --surface: #FDFDFB;
+    --surface-2: #EBEFE9;
+    --ink: #18251F;
+    --ink-soft: #4A5A50;
+    --line: #D5DCD4;
+    --accent: #136C4E;
+    --accent-ink: #FFFFFF;
+    --brass: #9A7B36;
+    --ok: #1E7A46;
+    --ok-bg: #E2F0E5;
+    --warn: #A66A00;
+    --warn-bg: #F6ECD8;
+    --crit: #B3372B;
+    --crit-bg: #F7E3E0;
+    --shadow: 0 1px 3px rgba(24, 37, 31, 0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111A15;
+      --surface: #18231D;
+      --surface-2: #1F2C25;
+      --ink: #DFE7E0;
+      --ink-soft: #93A498;
+      --line: #2C3A31;
+      --accent: #3FA07C;
+      --accent-ink: #0C1510;
+      --brass: #C4A45E;
+      --ok: #55B47F;
+      --ok-bg: #1A3326;
+      --warn: #D69A3A;
+      --warn-bg: #37290F;
+      --crit: #E06A5C;
+      --crit-bg: #3B1D18;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #F3F5F1;
+    --surface: #FDFDFB;
+    --surface-2: #EBEFE9;
+    --ink: #18251F;
+    --ink-soft: #4A5A50;
+    --line: #D5DCD4;
+    --accent: #136C4E;
+    --accent-ink: #FFFFFF;
+    --brass: #9A7B36;
+    --ok: #1E7A46;
+    --ok-bg: #E2F0E5;
+    --warn: #A66A00;
+    --warn-bg: #F6ECD8;
+    --crit: #B3372B;
+    --crit-bg: #F7E3E0;
+    --shadow: 0 1px 3px rgba(24, 37, 31, 0.08);
+  }
+  :root[data-theme="dark"] {
+    --bg: #111A15;
+    --surface: #18231D;
+    --surface-2: #1F2C25;
+    --ink: #DFE7E0;
+    --ink-soft: #93A498;
+    --line: #2C3A31;
+    --accent: #3FA07C;
+    --accent-ink: #0C1510;
+    --brass: #C4A45E;
+    --ok: #55B47F;
+    --ok-bg: #1A3326;
+    --warn: #D69A3A;
+    --warn-bg: #37290F;
+    --crit: #E06A5C;
+    --crit-bg: #3B1D18;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+  html { color-scheme: light dark; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .serif { font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
+  .num { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+  header {
+    border-bottom: 2px solid var(--accent);
+    background: var(--surface);
+    padding: 20px 28px 16px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  header h1 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 1.7rem;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.01em;
+  }
+  header .sub {
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+  }
+  header .sm-config {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+  }
+  header .sm-config input {
+    width: 110px;
+    text-align: right;
+  }
+
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+    display: grid;
+    grid-template-columns: minmax(320px, 5fr) minmax(320px, 6fr);
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 780px) {
+    main { grid-template-columns: 1fr; }
+  }
+  .full { grid-column: 1 / -1; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+    padding: 20px;
+  }
+  .card h2 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 1.12rem;
+    font-weight: 600;
+    margin: 0 0 4px;
+    text-wrap: balance;
+  }
+  .eyebrow {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--brass);
+    margin: 0 0 2px;
+  }
+  .hint { color: var(--ink-soft); font-size: 0.82rem; margin: 0 0 14px; }
+
+  form .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 14px;
+  }
+  form .grid .wide { grid-column: 1 / -1; }
+  label { display: block; }
+  label span.lbl {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--ink-soft);
+    margin-bottom: 3px;
+  }
+  input, select, textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--surface-2);
+    color: var(--ink);
+    font: inherit;
+  }
+  textarea { resize: vertical; min-height: 68px; }
+  input:focus, select:focus, textarea:focus, button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  button {
+    font: inherit;
+    font-weight: 600;
+    padding: 9px 18px;
+    border-radius: 4px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: var(--accent-ink);
+    cursor: pointer;
+  }
+  button.ghost {
+    background: transparent;
+    color: var(--accent);
+  }
+  button.small { padding: 4px 10px; font-size: 0.8rem; }
+  button.danger { border-color: var(--crit); background: transparent; color: var(--crit); }
+
+  .verdict {
+    border-radius: 5px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    border: 1px solid transparent;
+  }
+  .verdict strong { display: block; margin-bottom: 2px; }
+  .verdict.ok   { background: var(--ok-bg);   border-color: var(--ok);   }
+  .verdict.warn { background: var(--warn-bg); border-color: var(--warn); }
+  .verdict.crit { background: var(--crit-bg); border-color: var(--crit); }
+  .verdict.ok strong   { color: var(--ok); }
+  .verdict.warn strong { color: var(--warn); }
+  .verdict.crit strong { color: var(--crit); }
+  .verdict p { margin: 0; font-size: 0.86rem; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th {
+    font-size: 0.72rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  tr:last-child td { border-bottom: none; }
+  .table-wrap { overflow-x: auto; }
+
+  .pill {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 2px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .pill.andamento { background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .pill.audiencia { background: var(--warn-bg); color: var(--warn); }
+  .pill.sentenca  { background: var(--ok-bg); color: var(--ok); }
+  .pill.recurso   { background: var(--crit-bg); color: var(--crit); }
+  .pill.arquivado { background: var(--surface-2); color: var(--ink-soft); border: 1px dashed var(--line); }
+
+  .stats {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .stat {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 8px 14px;
+    min-width: 110px;
+  }
+  .stat .v { font-size: 1.3rem; font-weight: 700; }
+  .stat .k { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+
+  pre.resumo {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 14px;
+    font-size: 0.82rem;
+    white-space: pre-wrap;
+    overflow-x: auto;
+    margin: 10px 0 0;
+  }
+  .empty { color: var(--ink-soft); font-size: 0.88rem; padding: 14px 4px; }
+  footer.note {
+    grid-column: 1 / -1;
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .card { transition: box-shadow 0.15s ease; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>JEC Processador</h1>
+  <span class="sub serif">Juizado Especial Cível · Lei 9.099/1995</span>
+  <span class="sm-config">
+    <label for="sm">Salário mínimo (R$)</label>
+    <input class="num" id="sm" type="number" min="1" step="0.01" value="1518.00">
+  </span>
+</header>
+
+<main>
+  <section class="card" aria-labelledby="t-cadastro">
+    <p class="eyebrow">Cadastro</p>
+    <h2 id="t-cadastro">Dados do processo</h2>
+    <p class="hint">Preencha os dados da causa. A análise de competência e os prazos são calculados automaticamente ao lado.</p>
+    <form id="form">
+      <div class="grid">
+        <label class="wide"><span class="lbl">Autor (requerente)</span>
+          <input id="autor" required placeholder="Nome completo">
+        </label>
+        <label class="wide"><span class="lbl">Réu (requerido)</span>
+          <input id="reu" required placeholder="Nome ou razão social">
+        </label>
+        <label><span class="lbl">Tipo de ação</span>
+          <select id="tipo">
+            <option>Cobrança</option>
+            <option>Indenização por danos morais</option>
+            <option>Indenização por danos materiais</option>
+            <option>Consumidor (vício/defeito)</option>
+            <option>Despejo para uso próprio</option>
+            <option>Execução de título extrajudicial</option>
+            <option>Outra</option>
+          </select>
+        </label>
+        <label><span class="lbl">Valor da causa (R$)</span>
+          <input class="num" id="valor" type="number" min="0" step="0.01" required placeholder="0,00">
+        </label>
+        <label><span class="lbl">Distribuição</span>
+          <input id="distribuicao" type="date">
+        </label>
+        <label><span class="lbl">Ciência / intimação (base dos prazos)</span>
+          <input id="ciencia" type="date">
+        </label>
+        <label><span class="lbl">Status</span>
+          <select id="status">
+            <option value="andamento">Em andamento</option>
+            <option value="audiencia">Audiência marcada</option>
+            <option value="sentenca">Sentença proferida</option>
+            <option value="recurso">Em recurso</option>
+            <option value="arquivado">Arquivado</option>
+          </select>
+        </label>
+        <label><span class="lbl">Nº do processo (opcional)</span>
+          <input class="num" id="numero" placeholder="0000000-00.0000.0.00.0000">
+        </label>
+        <label class="wide"><span class="lbl">Resumo dos fatos</span>
+          <textarea id="fatos" placeholder="Descreva brevemente os fatos e o pedido."></textarea>
+        </label>
+      </div>
+      <div class="actions">
+        <button type="submit" id="salvar">Salvar processo</button>
+        <button type="button" class="ghost" id="limpar">Limpar formulário</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card" aria-labelledby="t-analise" aria-live="polite">
+    <p class="eyebrow">Análise</p>
+    <h2 id="t-analise">Competência e prazos</h2>
+    <p class="hint">Verificação do teto do JEC e prazos em dias úteis, contados da data de ciência.</p>
+    <div id="competencia"></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Prazo</th><th>Dias úteis</th><th>Termo final</th></tr>
+        </thead>
+        <tbody id="prazos">
+          <tr><td colspan="3" class="empty">Informe a data de ciência para calcular os prazos.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="actions">
+      <button type="button" class="ghost" id="gerar">Gerar resumo do caso</button>
+      <button type="button" class="ghost" id="copiar" hidden>Copiar resumo</button>
+    </div>
+    <pre class="resumo" id="resumo" hidden></pre>
+  </section>
+
+  <section class="card full" aria-labelledby="t-lista">
+    <p class="eyebrow">Acervo</p>
+    <h2 id="t-lista">Processos salvos</h2>
+    <p class="hint">Os processos ficam gravados neste navegador (localStorage).</p>
+    <div class="stats" id="stats"></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Autor × Réu</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Distribuição</th><th></th></tr>
+        </thead>
+        <tbody id="lista"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="note">
+    Ferramenta de apoio ao estudo e à organização de casos do Juizado Especial Cível.
+    Prazos contados em dias úteis (art. 12-A da Lei 9.099/1995), excluindo sábados e domingos —
+    feriados não são considerados no cálculo. Não substitui a consulta ao processo nem orientação jurídica.
+  </footer>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORE = "jec-processador";
+  var $ = function (id) { return document.getElementById(id); };
+  var brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+  var STATUS = {
+    andamento: "Em andamento",
+    audiencia: "Audiência marcada",
+    sentenca: "Sentença proferida",
+    recurso: "Em recurso",
+    arquivado: "Arquivado"
+  };
+  var PRAZOS = [
+    { nome: "Embargos de declaração (art. 49)", dias: 5 },
+    { nome: "Recurso inominado (art. 42)", dias: 10 },
+    { nome: "Contrarrazões ao recurso (art. 42, §2º)", dias: 10 },
+    { nome: "Pagamento voluntário — cumprimento de sentença (art. 523, CPC)", dias: 15 }
+  ];
+  var editandoId = null;
+
+  function carregar() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || []; }
+    catch (e) { return []; }
+  }
+  function gravar(lista) { localStorage.setItem(STORE, JSON.stringify(lista)); }
+
+  function parseData(iso) {
+    if (!iso) return null;
+    var p = iso.split("-");
+    return new Date(+p[0], +p[1] - 1, +p[2]);
+  }
+  function fmtData(d) {
+    if (!d) return "—";
+    return String(d.getDate()).padStart(2, "0") + "/" +
+           String(d.getMonth() + 1).padStart(2, "0") + "/" + d.getFullYear();
+  }
+  function somaDiasUteis(inicio, dias) {
+    var d = new Date(inicio.getTime()), n = 0;
+    while (n < dias) {
+      d.setDate(d.getDate() + 1);
+      var w = d.getDay();
+      if (w !== 0 && w !== 6) n++;
+    }
+    return d;
+  }
+
+  function lerForm() {
+    return {
+      id: editandoId || Date.now(),
+      autor: $("autor").value.trim(),
+      reu: $("reu").value.trim(),
+      tipo: $("tipo").value,
+      valor: parseFloat($("valor").value) || 0,
+      distribuicao: $("distribuicao").value,
+      ciencia: $("ciencia").value,
+      status: $("status").value,
+      numero: $("numero").value.trim(),
+      fatos: $("fatos").value.trim()
+    };
+  }
+
+  function analisarCompetencia() {
+    var sm = parseFloat($("sm").value) || 0;
+    var valor = parseFloat($("valor").value);
+    var alvo = $("competencia");
+    if (!sm || isNaN(valor) || valor <= 0) {
+      alvo.innerHTML = '<div class="verdict warn"><strong>Aguardando valor da causa</strong>' +
+        '<p>Informe o valor da causa e o salário mínimo vigente para verificar a competência do JEC.</p></div>';
+      return;
+    }
+    var emSM = valor / sm;
+    var emSMFmt = emSM.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+    var html;
+    if (emSM <= 20) {
+      html = '<div class="verdict ok"><strong>Dentro da competência — até 20 salários mínimos</strong>' +
+        '<p>' + brl.format(valor) + ' equivale a <span class="num">' + emSMFmt + '</span> salários mínimos. ' +
+        'A parte pode postular <em>sem advogado</em> (art. 9º da Lei 9.099/95).</p></div>';
+    } else if (emSM <= 40) {
+      html = '<div class="verdict warn"><strong>Dentro da competência — advogado obrigatório</strong>' +
+        '<p>' + brl.format(valor) + ' equivale a <span class="num">' + emSMFmt + '</span> salários mínimos. ' +
+        'Entre 20 e 40 salários mínimos a assistência por advogado é obrigatória (art. 9º da Lei 9.099/95).</p></div>';
+    } else {
+      var teto = sm * 40;
+      html = '<div class="verdict crit"><strong>Excede a competência do JEC</strong>' +
+        '<p>' + brl.format(valor) + ' equivale a <span class="num">' + emSMFmt + '</span> salários mínimos — acima do teto de 40 ' +
+        '(' + brl.format(teto) + '). É preciso renunciar ao valor excedente (art. 3º, §3º) ou ajuizar na Justiça Comum.</p></div>';
+    }
+    alvo.innerHTML = html;
+  }
+
+  function calcularPrazos() {
+    var base = parseData($("ciencia").value);
+    var corpo = $("prazos");
+    if (!base) {
+      corpo.innerHTML = '<tr><td colspan="3" class="empty">Informe a data de ciência para calcular os prazos.</td></tr>';
+      return;
+    }
+    corpo.innerHTML = PRAZOS.map(function (p) {
+      var fim = somaDiasUteis(base, p.dias);
+      return "<tr><td>" + p.nome + '</td><td class="num">' + p.dias +
+        '</td><td class="num">' + fmtData(fim) + "</td></tr>";
+    }).join("");
+  }
+
+  function gerarResumo() {
+    var p = lerForm();
+    var sm = parseFloat($("sm").value) || 0;
+    var emSM = sm ? (p.valor / sm).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) : "—";
+    var linhas = [
+      "RESUMO DO CASO — JUIZADO ESPECIAL CÍVEL",
+      "",
+      "Processo nº: " + (p.numero || "não distribuído / não informado"),
+      "Autor: " + (p.autor || "—"),
+      "Réu: " + (p.reu || "—"),
+      "Ação: " + p.tipo,
+      "Valor da causa: " + brl.format(p.valor) + " (" + emSM + " salários mínimos)",
+      "Distribuição: " + fmtData(parseData(p.distribuicao)),
+      "Status: " + STATUS[p.status],
+      "",
+      "Fatos:",
+      p.fatos || "—"
+    ];
+    var base = parseData(p.ciencia);
+    if (base) {
+      linhas.push("", "Prazos (dias úteis, a partir de " + fmtData(base) + "):");
+      PRAZOS.forEach(function (pr) {
+        linhas.push("  - " + pr.nome + ": " + fmtData(somaDiasUteis(base, pr.dias)));
+      });
+    }
+    var pre = $("resumo");
+    pre.textContent = linhas.join("\n");
+    pre.hidden = false;
+    $("copiar").hidden = false;
+  }
+
+  function render() {
+    var lista = carregar();
+    var corpo = $("lista");
+    if (!lista.length) {
+      corpo.innerHTML = '<tr><td colspan="6" class="empty">Nenhum processo salvo ainda. Cadastre o primeiro ao lado.</td></tr>';
+    } else {
+      corpo.innerHTML = lista.map(function (p) {
+        return "<tr>" +
+          "<td><strong>" + esc(p.autor) + "</strong> × " + esc(p.reu) +
+          (p.numero ? '<br><span class="num" style="font-size:.75rem;color:var(--ink-soft)">' + esc(p.numero) + "</span>" : "") + "</td>" +
+          "<td>" + esc(p.tipo) + "</td>" +
+          '<td class="num">' + brl.format(p.valor) + "</td>" +
+          '<td><span class="pill ' + p.status + '">' + STATUS[p.status] + "</span></td>" +
+          '<td class="num">' + fmtData(parseData(p.distribuicao)) + "</td>" +
+          '<td style="white-space:nowrap">' +
+            '<button type="button" class="ghost small" data-editar="' + p.id + '">Editar</button> ' +
+            '<button type="button" class="danger small" data-excluir="' + p.id + '">Excluir</button>' +
+          "</td></tr>";
+      }).join("");
+    }
+    var ativos = lista.filter(function (p) { return p.status !== "arquivado"; });
+    var total = ativos.reduce(function (s, p) { return s + p.valor; }, 0);
+    $("stats").innerHTML =
+      '<div class="stat"><div class="v num">' + lista.length + '</div><div class="k">Processos</div></div>' +
+      '<div class="stat"><div class="v num">' + ativos.length + '</div><div class="k">Ativos</div></div>' +
+      '<div class="stat"><div class="v num">' + brl.format(total) + '</div><div class="k">Em disputa (ativos)</div></div>';
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function limparForm() {
+    $("form").reset();
+    editandoId = null;
+    $("salvar").textContent = "Salvar processo";
+    analisarCompetencia();
+    calcularPrazos();
+    $("resumo").hidden = true;
+    $("copiar").hidden = true;
+  }
+
+  $("form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var novo = lerForm();
+    var lista = carregar();
+    var idx = lista.findIndex(function (p) { return p.id === novo.id; });
+    if (idx >= 0) lista[idx] = novo; else lista.push(novo);
+    gravar(lista);
+    render();
+    limparForm();
+  });
+
+  $("limpar").addEventListener("click", limparForm);
+  $("gerar").addEventListener("click", gerarResumo);
+  $("copiar").addEventListener("click", function () {
+    navigator.clipboard.writeText($("resumo").textContent).then(function () {
+      $("copiar").textContent = "Copiado";
+      setTimeout(function () { $("copiar").textContent = "Copiar resumo"; }, 1500);
+    });
+  });
+
+  $("lista").addEventListener("click", function (e) {
+    var btn = e.target.closest("button");
+    if (!btn) return;
+    var lista = carregar();
+    if (btn.dataset.excluir) {
+      gravar(lista.filter(function (p) { return p.id !== +btn.dataset.excluir; }));
+      if (editandoId === +btn.dataset.excluir) limparForm();
+      render();
+    } else if (btn.dataset.editar) {
+      var p = lista.find(function (x) { return x.id === +btn.dataset.editar; });
+      if (!p) return;
+      editandoId = p.id;
+      $("autor").value = p.autor;
+      $("reu").value = p.reu;
+      $("tipo").value = p.tipo;
+      $("valor").value = p.valor;
+      $("distribuicao").value = p.distribuicao;
+      $("ciencia").value = p.ciencia;
+      $("status").value = p.status;
+      $("numero").value = p.numero;
+      $("fatos").value = p.fatos;
+      $("salvar").textContent = "Atualizar processo";
+      analisarCompetencia();
+      calcularPrazos();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
+
+  ["valor", "sm"].forEach(function (id) {
+    $(id).addEventListener("input", analisarCompetencia);
+  });
+  $("ciencia").addEventListener("input", calcularPrazos);
+
+  analisarCompetencia();
+  render();
+})();
+</script>
+</body>
+</html>
